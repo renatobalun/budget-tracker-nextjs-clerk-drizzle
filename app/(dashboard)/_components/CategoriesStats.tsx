@@ -5,19 +5,27 @@ import SkeletonWrapper from "@/components/SkeletonWrapper";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { db } from "@/db";
+import { currencies, users } from "@/db/schema";
 import { DateToUTCDate, GetFormatterForCurrency } from "@/lib/helpers";
 import { TransactionType } from "@/lib/types";
-import { UserSettings } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
+import { eq } from "drizzle-orm";
 import React, { useMemo } from "react";
 
 interface Props {
-  userSettings: UserSettings;
+  userSettings: typeof users;
   from: Date;
   to: Date;
 }
 
-function CategoriesStats({ userSettings, from, to }: Props) {
+async function CategoriesStats({ userSettings, from, to }: Props) {
+
+
+  const currencySettings = await db.query.currencies.findFirst({
+    where: eq(userSettings.currency, currencies.id)
+  });
+
   const statsQuery = useQuery<GetCategoriesStatsResponseType>({
     queryKey: ["overview", "stats", "categories", from, to],
     queryFn: () =>
@@ -29,7 +37,7 @@ function CategoriesStats({ userSettings, from, to }: Props) {
   });
 
   const formatter = useMemo(() => {
-    return GetFormatterForCurrency(userSettings.currency);
+    return GetFormatterForCurrency(currencySettings?.name);
   }, [userSettings.currency]);
 
   return (

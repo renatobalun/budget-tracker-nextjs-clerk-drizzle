@@ -1,11 +1,13 @@
 import { Button } from "@/components/ui/button";
-import prisma from "@/lib/prisma";
 import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import React from "react";
 import CreateTransactionDialog from "./_components/CreateTransactionDialog";
 import Overview from "./_components/Overview";
 import History from "./_components/History";
+import { db } from "@/db";
+import { eq } from "drizzle-orm";
+import { users } from "@/db/schema";
 
 async function page() {
   const user = await currentUser();
@@ -13,10 +15,8 @@ async function page() {
     redirect("sign-in");
   }
 
-  const userSettings = await prisma.userSettings.findUnique({
-    where: {
-      userId: user.id,
-    },
+  const userSettings = await db.query.users.findFirst({
+    where: eq(users.user_id, user.id),
   });
 
   if (!userSettings) {

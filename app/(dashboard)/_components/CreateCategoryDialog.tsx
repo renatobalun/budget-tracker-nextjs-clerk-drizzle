@@ -30,7 +30,7 @@ import { cn } from "@/lib/utils";
 import {
   CreateCategorySchema,
   CreateCategorySchemaType,
-} from "@/schema/categories";
+} from "@/validation/categories";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CircleOff, Loader2, PlusSquare } from "lucide-react";
 import React, { ReactNode, useCallback, useState } from "react";

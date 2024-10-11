@@ -21,7 +21,7 @@ import {
 import { cn } from "@/lib/utils";
 import CountUp from "react-countup";
 
-function History({ userSettings }: { userSettings: UserSettings }) {
+function History({ userSettings }: { userSettings: {} }) {
   const [timeframe, setTimeframe] = useState<Timeframe>("month");
   const [period, setPeriod] = useState<Period>({
     month: new Date().getMonth(),

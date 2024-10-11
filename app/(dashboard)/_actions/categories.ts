@@ -6,7 +6,7 @@ import {
   CreateCategorySchemaType,
   DeleteCategorySchema,
   DeleteCategorySchemaType,
-} from "@/schema/categories";
+} from "@/validation/categories";
 import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 

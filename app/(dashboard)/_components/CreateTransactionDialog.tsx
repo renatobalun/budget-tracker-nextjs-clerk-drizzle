@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import {
   CreateTransactionSchema,
   CreateTransactionSchemaType,
-} from "@/schema/transaction";
+} from "@/validation/transaction";
 import { ReactNode, useCallback, useState } from "react";
 
 interface Props {

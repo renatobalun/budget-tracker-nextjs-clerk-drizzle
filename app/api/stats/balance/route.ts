@@ -1,5 +1,5 @@
 import prisma from "@/lib/prisma";
-import { OverviewQuerySchema } from "@/schema/overview";
+import { OverviewQuerySchema } from "@/validation/overview";
 import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 

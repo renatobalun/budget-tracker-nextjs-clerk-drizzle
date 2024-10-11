@@ -4,9 +4,11 @@ import { GetBalanceStatsResponseType } from "@/app/api/stats/balance/route";
 import SkeletonWrapper from "@/components/SkeletonWrapper";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { db } from "@/db";
+import { currencies, users } from "@/db/schema";
 import { DateToUTCDate, GetFormatterForCurrency } from "@/lib/helpers";
-import { UserSettings } from "@prisma/client";
 import { useQuery } from "@tanstack/react-query";
+import { eq } from "drizzle-orm";
 import { TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import React, { ReactNode, useCallback, useMemo } from "react";
 import CountUp from "react-countup";
@@ -14,10 +16,15 @@ import CountUp from "react-countup";
 interface Props {
   from: Date;
   to: Date;
-  userSettings: UserSettings;
+  userSettings: typeof users;
 }
 
-function StatsCards({ from, to, userSettings }: Props) {
+async function StatsCards({ from, to, userSettings }: Props) {
+  
+  const currencySettings = await db.query.currencies.findFirst({
+    where: eq(userSettings.currency, currencies.id)
+  });
+
   const statsQuery = useQuery<GetBalanceStatsResponseType>({
     queryKey: ["overview", "stats", from, to],
     queryFn: () =>
@@ -27,8 +34,8 @@ function StatsCards({ from, to, userSettings }: Props) {
   });
 
   const formatter = useMemo(() => {
-    return GetFormatterForCurrency(userSettings.currency);
-  }, [userSettings.currency]);
+    return GetFormatterForCurrency(currencySettings?.name);
+  }, [userSettings.currency.name]);
 
   const income = statsQuery.data?.income || 0;
   const expense = statsQuery.data?.expense || 0;
@@ -104,17 +111,18 @@ function StatCard({
 
   return (
     <Card className="flex h-24 w-full items-center gap-2 p-4">
-        {icon}
-        <div className="flex flex-col items-start gap-0">
-            <p className="text-muted-foreground">{title}</p>
-            <CountUp 
-            preserveValue
-            redraw={false}
-            end={value}
-            decimals={2}
-            formattingFn={formatFn}
-            className="text-2xl" />
-        </div>
+      {icon}
+      <div className="flex flex-col items-start gap-0">
+        <p className="text-muted-foreground">{title}</p>
+        <CountUp
+          preserveValue
+          redraw={false}
+          end={value}
+          decimals={2}
+          formattingFn={formatFn}
+          className="text-2xl"
+        />
+      </div>
     </Card>
-  )
+  );
 }

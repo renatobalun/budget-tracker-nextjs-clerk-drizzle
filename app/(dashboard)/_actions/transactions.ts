@@ -4,7 +4,7 @@ import prisma from "@/lib/prisma";
 import {
   CreateTransactionSchema,
   CreateTransactionSchemaType,
-} from "@/schema/transaction";
+} from "@/validation/transaction";
 import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 
