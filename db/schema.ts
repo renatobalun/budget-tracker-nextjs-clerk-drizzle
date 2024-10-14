@@ -35,7 +35,7 @@ export const currencies = pgTable("currency", {
 export const categories = pgTable("category", {
   id: serial("id").primaryKey(),
   name: text("name").notNull().unique(),
-  icon: text("icon").notNull().unique(),
+  icon: text("icon").notNull(),
   created_at: timestamp("created_at").defaultNow().notNull(),
 });
 

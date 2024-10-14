@@ -16,13 +16,12 @@ import CountUp from "react-countup";
 interface Props {
   from: Date;
   to: Date;
-  userSettings: typeof users;
+  userSettings: any;
 }
 
 async function StatsCards({ from, to, userSettings }: Props) {
-  
   const currencySettings = await db.query.currencies.findFirst({
-    where: eq(userSettings.currency, currencies.id)
+    where: eq(userSettings.currency, currencies.id),
   });
 
   const statsQuery = useQuery<GetBalanceStatsResponseType>({

@@ -1,6 +1,8 @@
-import prisma from "@/lib/prisma";
+import { db } from "@/db";
+import { transactions } from "@/db/schema";
 import { OverviewQuerySchema } from "@/validation/overview";
 import { currentUser } from "@clerk/nextjs/server";
+import { sum, and, eq, gte, lte } from "drizzle-orm";
 import { redirect } from "next/navigation";
 
 export async function GET(request: Request) {
@@ -35,22 +37,38 @@ export type GetBalanceStatsResponseType = Awaited<
 >;
 
 async function getBalanceStats(userId: string, from: Date, to: Date) {
-  const totals = await prisma.transaction.groupBy({
-    by: ["type"],
-    where: {
-      userId,
-      date: {
-        gte: from,
-        lte: to,
-      },
-    },
-    _sum: {
-      amount: true,
-    },
-  });
+  const totals = await db
+    .select({
+      type: transactions.type,
+      totalAmount: sum(transactions.amount),
+    })
+    .from(transactions)
+    .where(
+      and(
+        eq(transactions.userId, userId),
+        gte(transactions.date, from.toISOString().split("T")[0]),
+        lte(transactions.date, to.toISOString().split("T")[0])
+      )
+    )
+    .groupBy(transactions.type);
+
+  // PRISMA
+  // const totals = await prisma.transaction.groupBy({
+  //   by: ["type"],
+  //   where: {
+  //     userId,
+  //     date: {
+  //       gte: from,
+  //       lte: to,
+  //     },
+  //   },
+  //   _sum: {
+  //     amount: true,
+  //   },
+  // });
 
   return {
-    expense: totals.find(t => t.type === "expense")?._sum.amount || 0,
-    income: totals.find(t => t.type === "income")?._sum.amount || 0,
+    expense: totals.find((t) => t.type === "expense")?.totalAmount || 0,
+    income: totals.find((t) => t.type === "income")?.totalAmount || 0,
   };
 }

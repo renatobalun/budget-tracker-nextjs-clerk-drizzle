@@ -1,7 +1,9 @@
-import prisma from "@/lib/prisma";
+import { db } from "@/db";
+import { transactions } from "@/db/schema";
 import { Period, Timeframe } from "@/lib/types";
 import { currentUser } from "@clerk/nextjs/server";
 import { getDaysInMonth } from "date-fns";
+import { and, asc, eq, sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
@@ -68,22 +70,21 @@ type HistoryData = {
 };
 
 async function getYearHistoryData(userId: string, year: number) {
-  const result = await prisma.yearHistory.groupBy({
-    by: ["month"],
-    where: {
-      userId,
-      year,
-    },
-    _sum: {
-      expense: true,
-      income: true,
-    },
-    orderBy: [
-      {
-        month: "asc",
-      },
-    ],
-  });
+  const result = await db
+    .select({
+      month: sql<number>`EXTRACT(MONTH FROM ${transactions.date})`, // Extract month from the date
+      totalIncome: sql<number>`SUM(CASE WHEN ${transactions.type} = 'income' THEN ${transactions.amount} ELSE 0 END)`, // Sum income
+      totalExpense: sql<number>`SUM(CASE WHEN ${transactions.type} = 'expense' THEN ${transactions.amount} ELSE 0 END)`, // Sum expense
+    })
+    .from(transactions)
+    .where(
+      and(
+        eq(transactions.userId, userId), // Filter by user ID
+        eq(sql<number>`EXTRACT(YEAR FROM ${transactions.date})`, year) // Filter by year
+      )
+    )
+    .groupBy(sql`EXTRACT(MONTH FROM ${transactions.date})`) // Group by month
+    .orderBy(asc(sql`EXTRACT(MONTH FROM ${transactions.date})`)); // Order by month
 
   if (!result || result.length === 0) return [];
 
@@ -95,8 +96,8 @@ async function getYearHistoryData(userId: string, year: number) {
 
     const month = result.find((row) => row.month === i);
     if (month) {
-      expense = month._sum.expense || 0;
-      income = month._sum.income || 0;
+      expense = month.totalExpense || 0;
+      income = month.totalIncome || 0;
     }
 
     history.push({
@@ -114,23 +115,40 @@ async function getMonthHistoryData(
   year: number,
   month: number
 ) {
-  const result = await prisma.monthHistory.groupBy({
-    by: ["day"],
-    where: {
-      userId,
-      year,
-      month,
-    },
-    _sum: {
-      expense: true,
-      income: true,
-    },
-    orderBy: [
-      {
-        day: "asc",
-      },
-    ],
-  });
+  const result = await db
+    .select({
+      day: sql<number>`EXTRACT(DAY FROM ${transactions.date})`, // Extract day from the date
+      totalIncome: sql<number>`SUM(CASE WHEN ${transactions.type} = 'income' THEN ${transactions.amount} ELSE 0 END)`, // Sum income
+      totalExpense: sql<number>`SUM(CASE WHEN ${transactions.type} = 'expense' THEN ${transactions.amount} ELSE 0 END)`, // Sum expense
+    })
+    .from(transactions)
+    .where(
+      and(
+        eq(transactions.userId, userId), // Filter by userId
+        eq(sql<number>`EXTRACT(YEAR FROM ${transactions.date})`, year), // Filter by year
+        eq(sql<number>`EXTRACT(MONTH FROM ${transactions.date})`, month) // Filter by month
+      )
+    )
+    .groupBy(sql`EXTRACT(DAY FROM ${transactions.date})`) // Group by day
+    .orderBy(asc(sql`EXTRACT(DAY FROM ${transactions.date})`)); // Order by day
+
+  // const result = await prisma.monthHistory.groupBy({
+  //   by: ["day"],
+  //   where: {
+  //     userId,
+  //     year,
+  //     month,
+  //   },
+  //   _sum: {
+  //     expense: true,
+  //     income: true,
+  //   },
+  //   orderBy: [
+  //     {
+  //       day: "asc",
+  //     },
+  //   ],
+  // });
 
   if (!result || result.length === 0) return [];
 
@@ -143,8 +161,8 @@ async function getMonthHistoryData(
 
     const day = result.find((row) => row.day === i);
     if (day) {
-      expense = day._sum.expense || 0;
-      income = day._sum.income || 0;
+      expense = day.totalExpense || 0;
+      income = day.totalIncome || 0;
     }
 
     history.push({

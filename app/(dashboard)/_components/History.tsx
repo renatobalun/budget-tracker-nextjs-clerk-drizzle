@@ -4,7 +4,6 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { GetFormatterForCurrency } from "@/lib/helpers";
 import { Period, Timeframe } from "@/lib/types";
-import { UserSettings } from "@prisma/client";
 import React, { useCallback, useMemo, useState } from "react";
 import HistoryPeriodSelector from "./HistoryPeriodSelector";
 import { useQuery } from "@tanstack/react-query";
@@ -20,16 +19,24 @@ import {
 } from "recharts";
 import { cn } from "@/lib/utils";
 import CountUp from "react-countup";
+import { currencies, users } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { db } from "@/db";
 
-function History({ userSettings }: { userSettings: {} }) {
+async function History({ userSettings }: { userSettings: any }) {
   const [timeframe, setTimeframe] = useState<Timeframe>("month");
   const [period, setPeriod] = useState<Period>({
     month: new Date().getMonth(),
     year: new Date().getFullYear(),
   });
 
+  const currencySettings = await db
+    .select()
+    .from(currencies)
+    .where(eq(currencies.id, userSettings.currency!));
+
   const formatter = useMemo(() => {
-    return GetFormatterForCurrency(userSettings.currency);
+    return GetFormatterForCurrency(currencySettings.at(0)?.name);
   }, [userSettings.currency]);
 
   const historyDataQuery = useQuery({

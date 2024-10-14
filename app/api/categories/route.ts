@@ -1,6 +1,7 @@
 import { db } from "@/db";
+import { categories, transactions, users } from "@/db/schema";
 import { currentUser } from "@clerk/nextjs/server";
-import { eq } from "drizzle-orm";
+import { and, asc, eq, sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
@@ -24,6 +25,18 @@ export async function GET(request: Request) {
 
   const type = queryParams.data;
 
+  const categoriesSettings = await db
+    .select({
+      userId: transactions.userId,
+      createdAt: categories.created_at,
+      name: categories.name,
+      icon: categories.icon,
+    })
+    .from(transactions)
+    .leftJoin(categories, eq(transactions.categoryId, categories.id))
+    .where(eq(transactions.userId, user.id))
+    .orderBy(asc(categories.name));
+
   // const categories = await prisma.category.findMany({
   //   where: {
   //     userId: user.id,
@@ -34,5 +47,5 @@ export async function GET(request: Request) {
   //   }
   // });
 
-  return Response.json(categories);
+  return Response.json(categoriesSettings);
 }

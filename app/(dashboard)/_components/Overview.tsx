@@ -7,10 +7,10 @@ import React, { useState } from "react";
 import { toast } from "sonner";
 import StatsCards from "./StatsCards";
 import CategoriesStats from "./CategoriesStats";
-import {users} from "@/db/schema"
+import { users } from "@/db/schema"
 import { db } from "@/db";
 
-function Overview({ userSettings }: { userSettings: {}}) {
+function Overview({ userSettings }: { userSettings: typeof users }) {
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
     from: startOfMonth(new Date()),
     to: new Date(),

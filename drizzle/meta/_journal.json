@@ -29,6 +29,13 @@
       "when": 1728659733139,
       "tag": "0003_demonic_cobalt_man",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1728911153126,
+      "tag": "0004_sparkling_thundra",
+      "breakpoints": true
     }
   ]
 }

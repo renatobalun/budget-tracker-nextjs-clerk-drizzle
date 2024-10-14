@@ -1,5 +1,7 @@
-import prisma from "@/lib/prisma";
+import { db } from "@/db";
+import { transactions } from "@/db/schema";
 import { currentUser } from "@clerk/nextjs/server";
+import { eq, sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
 
 export async function GET(request: Request) {
@@ -17,20 +19,29 @@ export type GetHistoryPeriodsResponseType = Awaited<
 >;
 
 async function getHistoryPeriods(userId: string) {
-  const result = await prisma.monthHistory.findMany({
-    where: {
-      userId,
-    },
-    select: {
-      year: true,
-    },
-    distinct: ["year"],
-    orderBy: [
-      {
-        year: "asc",
-      },
-    ],
-  });
+  const result = await db
+    .selectDistinct({
+      year: sql<number>`EXTRACT(YEAR FROM ${transactions.date})`,
+    })
+    .from(transactions)
+    .where(eq(transactions.userId, userId))
+    .orderBy(sql`EXTRACT(YEAR FROM ${transactions.date})`);
+    
+  // PRISMA
+  // const result = await prisma.monthHistory.findMany({
+  //   where: {
+  //     userId,
+  //   },
+  //   select: {
+  //     year: true,
+  //   },
+  //   distinct: ["year"],
+  //   orderBy: [
+  //     {
+  //       year: "asc",
+  //     },
+  //   ],
+  // });
 
   const years = result.map((el) => el.year);
   if (years.length === 0) {
